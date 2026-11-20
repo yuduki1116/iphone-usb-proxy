@@ -1,0 +1,21 @@
+name: USBProxy
+options:
+  bundleIdPrefix: dev.yuduki
+targets:
+  USBProxy:
+    type: application
+    platform: iOS
+    deploymentTarget: "15.0"
+    sources: [USBProxy]
+    info:
+      path: USBProxy/Info.plist
+      properties:
+        CFBundleDisplayName: USBProxy
+        UILaunchScreen: {}
+        UIBackgroundModes: [audio]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.yuduki.usbproxy
+        SWIFT_VERSION: "5.0"
+        CODE_SIGNING_ALLOWED: "NO"
+        CODE_SIGNING_REQUIRED: "NO"

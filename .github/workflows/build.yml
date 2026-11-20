@@ -1,0 +1,43 @@
+name: build
+on:
+  push:
+  workflow_dispatch:
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install pyinstaller
+      - run: pyinstaller --onefile --uac-admin --name usbproxy windows/usbproxy.py
+      - name: bundle tun2socks + wintun
+        shell: pwsh
+        run: |
+          Invoke-WebRequest https://github.com/xjasonlyu/tun2socks/releases/download/v2.5.2/tun2socks-windows-amd64.zip -OutFile t.zip
+          Expand-Archive t.zip t2s
+          Invoke-WebRequest https://www.wintun.net/builds/wintun-0.14.1.zip -OutFile w.zip
+          Expand-Archive w.zip wt
+          New-Item -ItemType Directory out | Out-Null
+          Copy-Item t2s/tun2socks-windows-amd64.exe out/tun2socks.exe
+          Copy-Item wt/wintun/bin/amd64/wintun.dll out/
+          Copy-Item dist/usbproxy.exe out/
+      - uses: actions/upload-artifact@v4
+        with: { name: usbproxy-windows_v2, path: out }
+  ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: brew install xcodegen
+      - name: build
+        working-directory: ios
+        run: |
+          xcodegen
+          xcodebuild -project USBProxy.xcodeproj -scheme USBProxy -configuration Release \
+            -sdk iphoneos -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
+          mkdir Payload
+          cp -r build/Build/Products/Release-iphoneos/USBProxy.app Payload/
+          zip -r USBProxy_v2.ipa Payload
+      - uses: actions/upload-artifact@v4
+        with: { name: USBProxy-ios_v2, path: ios/USBProxy_v2.ipa }
